@@ -7018,13 +7018,17 @@ static void ggml_vk_instance_init() {
     const bool debug_utils_ext = ggml_vk_instance_debug_utils_ext_available(instance_extensions) && getenv("GGML_VK_DEBUG_MARKERS") != nullptr;
     std::vector<const char*> layers;
 
+#ifdef VK_EXT_layer_settings
     if (layer_settings) {
         layers.push_back("VK_LAYER_KHRONOS_validation");
     }
+#endif
     std::vector<const char*> extensions;
+#ifdef VK_EXT_layer_settings
     if (layer_settings) {
         extensions.push_back("VK_EXT_layer_settings");
     }
+#endif
 #ifdef __APPLE__
     if (portability_enumeration_ext) {
         extensions.push_back("VK_KHR_portability_enumeration");
@@ -7033,6 +7037,7 @@ static void ggml_vk_instance_init() {
     if (debug_utils_ext) {
         extensions.push_back("VK_EXT_debug_utils");
     }
+#ifdef VK_EXT_layer_settings
     VkBool32 enable_best_practice = layer_settings;
     std::vector<vk::LayerSettingEXT> settings = {
         {
@@ -7045,6 +7050,9 @@ static void ggml_vk_instance_init() {
     };
     vk::LayerSettingsCreateInfoEXT layer_setting_info(settings);
     vk::InstanceCreateInfo instance_create_info(vk::InstanceCreateFlags{}, &app_info, layers, extensions, &layer_setting_info);
+#else
+    vk::InstanceCreateInfo instance_create_info(vk::InstanceCreateFlags{}, &app_info, layers, extensions, nullptr);
+#endif
 #ifdef __APPLE__
     if (portability_enumeration_ext) {
         instance_create_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
