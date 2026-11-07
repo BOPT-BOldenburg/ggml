@@ -5264,6 +5264,7 @@ void ggml_vk_instance_init() {
     if (debug_utils_ext) {
         extensions.push_back("VK_EXT_debug_utils");
     }
+#ifdef VK_EXT_LAYER_SETTINGS_EXTENSION_NAME
     VkBool32 enable_best_practice = layer_settings;
     std::vector<vk::LayerSettingEXT> settings = {
         {
@@ -5276,6 +5277,9 @@ void ggml_vk_instance_init() {
     };
     vk::LayerSettingsCreateInfoEXT layer_setting_info(settings);
     vk::InstanceCreateInfo instance_create_info(vk::InstanceCreateFlags{}, &app_info, layers, extensions, &layer_setting_info);
+#else
+    vk::InstanceCreateInfo instance_create_info(vk::InstanceCreateFlags{}, &app_info, layers, extensions);
+#endif
 #ifdef __APPLE__
     if (portability_enumeration_ext) {
         instance_create_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
@@ -16606,7 +16610,7 @@ void vk_queue_handle_unsynchronized::submit(vk::ArrayProxy<const vk::SubmitInfo>
 
 vk_device_struct::~vk_device_struct() {
     // the build failed before the device was created, nothing to destroy
-    if (device == VK_NULL_HANDLE) {
+    if (!device) {
         return;
     }
 
